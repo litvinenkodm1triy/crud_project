@@ -1,3 +1,5 @@
+package entities;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,4 +28,9 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @PrePersist
+    public void createdData() {
+        createdAt = LocalDateTime.now();
+    }
 }
