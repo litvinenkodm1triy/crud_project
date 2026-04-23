@@ -1,6 +1,7 @@
 package dao;
 
 import entities.User;
+import exceptions.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -36,7 +37,7 @@ public class UserDaoImpl implements UserDao {
             return user;
         } catch (Exception e) {
             log.error("Ошибка при поиске пользователя id={}", id, e);
-            throw new RuntimeException("Не удалось найти пользователя", e);
+            throw new UserNotFoundException("Не удалось найти пользователя");
         }
     }
 
@@ -69,7 +70,7 @@ public class UserDaoImpl implements UserDao {
             log.info("Пользователь с id={} обновлён", user.getId());
         } catch (Exception e) {
             log.error("Ошибка при обновлении пользователя id={}", user.getId(), e);
-            throw new RuntimeException("Не удалось обновить пользователя", e);
+            throw new UserNotFoundException("Не удалось обновить пользователя");
         }
     }
 
@@ -88,7 +89,7 @@ public class UserDaoImpl implements UserDao {
             log.info("Пользователь с id={} удалён", id);
         } catch (Exception e) {
             log.error("Ошибка при удалении пользователя id={}", id, e);
-            throw new RuntimeException("Не удалось удалить пользователя", e);
+            throw new UserNotFoundException("Не удалось удалить пользователя");
         }
     }
 }
