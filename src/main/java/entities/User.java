@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-
+@ToString          // ← добавьте эту аннотацию
 @Entity
 @Table(name = "users")
 public class User {
