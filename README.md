@@ -1,4 +1,4 @@
-📝 User CRUD Console App
+📝 User-service
 Простое консольное CRUD-приложение для управления пользователями с использованием Hibernate, PostgreSQL и Maven.
 
 ✨ Возможности
