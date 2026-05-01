@@ -1,6 +1,7 @@
 import controller.UserController;
 import dao.UserDaoImpl;
 import exceptions.UserException;
+import service.UserService;
 import util.HibernateUtil;
 import entities.User;
 
@@ -9,7 +10,9 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static UserController userController = new UserController(new UserDaoImpl());
+    private static UserController userController = new UserController(
+            new UserService(new UserDaoImpl())
+    );
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);

@@ -4,6 +4,7 @@ import entities.User;
 import exceptions.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import util.HibernateUtil;
 
@@ -12,10 +13,20 @@ import java.util.List;
 @Slf4j
 public class UserDaoImpl implements UserDao {
 
+    private final SessionFactory sessionFactory;
+
+    public UserDaoImpl() {
+        this.sessionFactory = HibernateUtil.getSessionFactory();
+    }
+
+    public UserDaoImpl(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     @Override
     public void save(User user) {
         log.debug("Сохранение пользователя: {}", user);
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             Transaction tx = session.beginTransaction();
             session.persist(user);
             tx.commit();
@@ -29,25 +40,27 @@ public class UserDaoImpl implements UserDao {
     @Override
     public User findById(Long id) {
         log.debug("Поиск пользователя по id={}", id);
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
+        try (Session session = sessionFactory.openSession()) {
             User user = session.find(User.class, id);
-            tx.commit();
+            if (user == null) {
+                log.warn("Пользователь с id={} не найден", id);
+                throw new UserNotFoundException("Пользователь с id " + id + " не найден");
+            }
             log.info("Найден пользователь: {}", user);
             return user;
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при поиске пользователя id={}", id, e);
-            throw new UserNotFoundException("Не удалось найти пользователя");
+            throw new UserNotFoundException("Не удалось выполнить поиск пользователя", e);
         }
     }
 
     @Override
     public List<User> findAll() {
         log.debug("Запрос всех пользователей");
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction tx = session.beginTransaction();
+        try (Session session = sessionFactory.openSession()) {
             List<User> users = session.createQuery("FROM User", User.class).list();
-            tx.commit();
             log.info("Найдено {} пользователей", users.size());
             return users;
         } catch (Exception e) {
@@ -59,37 +72,44 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void update(User user) {
         log.debug("Обновление пользователя: {}", user);
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             Transaction tx = session.beginTransaction();
             User existing = session.find(User.class, user.getId());
             if (existing == null) {
-                throw new RuntimeException("Пользователь с id " + user.getId() + " не найден для обновления");
+                throw new UserNotFoundException("Пользователь с id " + user.getId() + " не найден для обновления");
             }
-            session.merge(user);
+            // Обновляем только изменяемые поля (без merge, чтобы избежать лишнего select)
+            existing.setName(user.getName());
+            existing.setEmail(user.getEmail());
+            existing.setAge(user.getAge());
             tx.commit();
             log.info("Пользователь с id={} обновлён", user.getId());
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при обновлении пользователя id={}", user.getId(), e);
-            throw new UserNotFoundException("Не удалось обновить пользователя");
+            throw new UserNotFoundException("Не удалось обновить пользователя", e);
         }
     }
 
     @Override
     public void delete(Long id) {
         log.debug("Удаление пользователя с id={}", id);
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             Transaction tx = session.beginTransaction();
             User user = session.find(User.class, id);
             if (user == null) {
                 log.warn("Пользователь с id={} не найден, удаление невозможно", id);
-                throw new RuntimeException("Пользователь с id " + id + " не найден");
+                throw new UserNotFoundException("Пользователь с id " + id + " не найден");
             }
             session.remove(user);
             tx.commit();
             log.info("Пользователь с id={} удалён", id);
+        } catch (UserNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при удалении пользователя id={}", id, e);
-            throw new UserNotFoundException("Не удалось удалить пользователя");
+            throw new UserNotFoundException("Не удалось удалить пользователя", e);
         }
     }
 }
