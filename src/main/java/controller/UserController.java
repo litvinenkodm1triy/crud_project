@@ -1,10 +1,10 @@
 package controller;
 
-import dao.UserDao;
 import entities.User;
 import exceptions.UserNotFoundException;
 import exceptions.UserValidationException;
 import lombok.extern.slf4j.Slf4j;
+import service.UserService;
 import validation.UserValidation;
 
 import java.util.List;
@@ -12,12 +12,11 @@ import java.util.List;
 @Slf4j
 public class UserController {
 
-    private final UserDao userDao;
+    private final UserService userService;
 
-    public UserController(UserDao userDao) {
-        this.userDao = userDao;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
-
 
     public void createUser(String name, String email, Integer age) {
         UserValidation.validateName(name);
@@ -30,7 +29,7 @@ public class UserController {
                 .age(age)
                 .build();
 
-        userDao.save(user);
+        userService.createUser(user);
         log.info("Пользователь успешно сохранен!");
     }
 
@@ -38,28 +37,21 @@ public class UserController {
         if (id == null || id <= 0) {
             throw new UserValidationException("Некорректный id");
         }
-        User user = userDao.findById(id);
-        if (user == null) {
-            throw new UserNotFoundException("Пользователь с id " + id + " не найден");
-        }
+        User user = userService.getUser(id);
         log.info("Найден пользователь с id = {}", id);
         return user;
     }
 
     public List<User> getAllUser() {
-
-        List<User> all = userDao.findAll();
+        List<User> all = userService.getAllUsers();
         log.info("Получен список всех пользователей!");
         return all;
     }
 
     public void updateUser(Long id, String name, String email, Integer age) {
-
-        User existing = userDao.findById(id);
-        if (existing == null) {
-            throw new UserNotFoundException("Пользователь с id " + id + " не найден");
+        if (id == null || id <= 0) {
+            throw new UserValidationException("Некорректный id");
         }
-
         UserValidation.validateName(name);
         UserValidation.validateEmail(email);
         UserValidation.validateAge(age);
@@ -71,19 +63,15 @@ public class UserController {
                 .age(age)
                 .build();
 
-        userDao.update(user);
+        userService.updateUser(user);
         log.info("Данные пользователя успешно обновлены!");
     }
 
     public void deleteUser(Long id) {
-
-        User existing = userDao.findById(id);
-        if (existing == null) {
-            throw new UserNotFoundException("Пользователь с id " + id + " не найден");
+        if (id == null || id <= 0) {
+            throw new UserValidationException("Некорректный id");
         }
-
-        userDao.delete(id);
-        log.info("Удален пользователь с id ={}", id);
+        userService.deleteUser(id);
+        log.info("Удален пользователь с id = {}", id);
     }
-
 }
